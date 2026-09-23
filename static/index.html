@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>영양제 도우미</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 800px;
+            margin: 50px auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .box {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        img {
+            max-width: 300px;
+            margin-top: 20px;
+        }
+
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>영양제 도우미</h1>
+
+<div class="box">
+
+    <h2>영양제 이미지 분석</h2>
+
+    <input type="file"
+           id="image"
+           accept="image/*">
+
+    <br>
+
+    <button onclick="analyzeSupplement()">
+        분석하기
+    </button>
+
+</div>
+
+
+<div id="result" class="box" style="display:none;">
+
+    <h2>OCR 결과</h2>
+
+    <p>
+        <strong>제품명:</strong>
+        <span id="supplementName"></span>
+    </p>
+
+    <p>
+        <strong>제조사:</strong>
+        <span id="manufacturer"></span>
+    </p>
+
+    <p>
+        <strong>1일 섭취량:</strong>
+        <span id="dailyDose"></span>
+    </p>
+
+    <h3>성분</h3>
+    <ul id="ingredients"></ul>
+
+
+    <h2>AI 분석</h2>
+
+    <h3>효과</h3>
+    <ul id="effects"></ul>
+
+    <h3>추천 복용 시간</h3>
+    <p id="recommendedTime"></p>
+
+    <h3>식사 관계</h3>
+    <p id="mealRelation"></p>
+
+    <h3>추천 이유</h3>
+    <p id="reason"></p>
+
+    <h3>주의사항</h3>
+    <ul id="cautions"></ul>
+
+    <h3>상호작용 주의사항</h3>
+    <ul id="interactionNotes"></ul>
+
+</div>
+
+
+<script>
+
+async function analyzeSupplement() {
+
+    const imageInput = document.getElementById("image");
+
+    if (imageInput.files.length === 0) {
+        alert("영양제 이미지를 선택해주세요.");
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append(
+        "image",
+        imageInput.files[0]
+    );
+
+    try {
+
+        const response = await fetch(
+            "/ai/analyze",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        console.log(data);
+
+        if (data.status !== "success") {
+
+            alert("분석에 실패했습니다.");
+
+            console.log(data);
+
+            return;
+        }
+
+
+        // =========================
+        // OCR
+        // =========================
+
+        document.getElementById("supplementName").textContent =
+            data.ocr.supplement_name ?? "확인되지 않음";
+
+        document.getElementById("manufacturer").textContent =
+            data.ocr.manufacturer ?? "확인되지 않음";
+
+        document.getElementById("dailyDose").textContent =
+            data.ocr.daily_dose ?? "확인되지 않음";
+
+
+        const ingredients =
+            document.getElementById("ingredients");
+
+        ingredients.innerHTML = "";
+
+
+        if (data.ocr.ingredients) {
+
+            data.ocr.ingredients.forEach(item => {
+
+                const li = document.createElement("li");
+
+                li.textContent =
+                    `${item.name} : ${item.amount} ${item.unit}`;
+
+                ingredients.appendChild(li);
+
+            });
+
+        }
+
+
+        // =========================
+        // AI 분석
+        // =========================
+
+        const effects =
+            document.getElementById("effects");
+
+        effects.innerHTML = "";
+
+        data.analysis.effects?.forEach(item => {
+
+            const li = document.createElement("li");
+
+            li.textContent = item;
+
+            effects.appendChild(li);
+
+        });
+
+
+        document.getElementById("recommendedTime").textContent =
+            data.analysis.recommended_time ?? "확인 필요";
+
+
+        document.getElementById("mealRelation").textContent =
+            data.analysis.meal_relation ?? "확인 필요";
+
+
+        document.getElementById("reason").textContent =
+            data.analysis.reason ?? "확인 필요";
+
+
+        const cautions =
+            document.getElementById("cautions");
+
+        cautions.innerHTML = "";
+
+        data.analysis.cautions?.forEach(item => {
+
+            const li = document.createElement("li");
+
+            li.textContent = item;
+
+            cautions.appendChild(li);
+
+        });
+
+
+        const interactionNotes =
+            document.getElementById("interactionNotes");
+
+        interactionNotes.innerHTML = "";
+
+        data.analysis.interaction_notes?.forEach(item => {
+
+            const li = document.createElement("li");
+
+            li.textContent = item;
+
+            interactionNotes.appendChild(li);
+
+        });
+
+
+        // 결과 화면 표시
+        document.getElementById("result").style.display = "block";
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+        alert(
+            "AI 서버와 통신하는 중 오류가 발생했습니다."
+        );
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
