@@ -1,0 +1,15 @@
+{
+    "name": "NUTRI_FIT",
+    "short_name": "NUTRI_FIT",
+    "start_url": "/main",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4CAF50",
+    "icons": [
+        {
+            "src": "/images/nutriFitIcon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
+}
